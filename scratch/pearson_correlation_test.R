@@ -60,12 +60,12 @@ if (any(is.na(bio_matrix))) {
 #computing the pearson correalation, puts it into a matrix
 p_cor_raw <- cor(x = bio_matrix, method = "pearson")
 
-#finding which biolcim variables are highly correlated eliminate higher than 0.75 
+#finding which biolcim variables are highly correlated elimi nate higher than 0.75 
 p_cor_abs <- abs(x = p_cor_raw)
 
 #all_list- a list containt all the sublists 1-19 of high correlation variables
 layer_names <- names(bioclim_ca)
 cor_pairs <- expand.grid(var1 = layer_names,var2 = layer_names)
-cor_paris$correlation <- as.vector(p_cor_abs)
+cor_pairs$correlation <- as.vector(p_cor_abs)
   
 
