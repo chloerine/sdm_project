@@ -12,17 +12,6 @@ library("maps")
 library("sf")
 library("rnaturalearth")
 
-#function identifying if the column is a specific number
-id_cor <- function(matrix,num){
-  temp_cor <- list()
-  for (row in 1:nrow(matrix)){
-    if ((matrix[[row,2]] == num)&(matrix[[row,1]]!=num)){
-      temp_cor <- c(temp_cor, matrix[[row,1]])
-    }
-  }
-  return(temp_cor)
-}
-
 # Read all rasters in at once
 input_dir <- "data/wc2.1_30s_bio/"
 files <- list.files(input_dir, pattern = "\\.tif$", full.names = TRUE)
@@ -60,12 +49,27 @@ if (any(is.na(bio_matrix))) {
 #computing the pearson correalation, puts it into a matrix
 p_cor_raw <- cor(x = bio_matrix, method = "pearson")
 
-#finding which biolcim variables are highly correlated elimi nate higher than 0.75 
+#getting absolute values
 p_cor_abs <- abs(x = p_cor_raw)
 
 #all_list- a list containt all the sublists 1-19 of high correlation variables
-layer_names <- names(bioclim_ca)
+layer_names <- names(bioclim_ca) 
 cor_pairs <- expand.grid(var1 = layer_names,var2 = layer_names)
 cor_pairs$correlation <- as.vector(p_cor_abs)
-  
+cor_pairs_sub <- subset(x = cor_pairs, subset = (cor_pairs$correlation > 0.75) & (cor_pairs$var1 != cor_pairs$var2)) #only getting those with correaltion higher thatn 0.75 and those with same pair eg bio1 and bio1 wld have a correlation of 1
+
+#counting how many pairs are the highy correlated with others. eg bio1 is highly correlated with 9
+cor_count = table(cor_pairs_sub$var2)
+message("displaying how many other variables are highly correlated with a certain varaibles, eg: bio1 is hihgly correlated with 8 other variables")
+print(cor_count) #prints out how many other bioclim variables a certain variables is correlated with
+
+
+
+
+
+
+
+
+
+
 
