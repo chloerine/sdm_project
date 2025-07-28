@@ -3,7 +3,6 @@
 source("scratch/pearson_correlation_test.R")
 message("Loading Correlation Test...")
 
-
 max_cor <- 0.7
 #function that tells if a subset of biolcim variables has a high correlation
 high_correlation <- function(subset,show_rslt) {#subset: list with bioclim variables, show_rslt: boolean value that shows which pairs failed or passed
@@ -34,7 +33,7 @@ if((high_correlation(high_correlation_list,FALSE)) && (!high_correlation(low_cor
   message("The function does not work")
 }
 
-# Using function on subsets of length 7 and length 6 ===
+# Using function on subsets of length 7 and length 6 ====
 largest_subset_correct <- 0
 for (subset in largest_subset_list) {
   #print(subset)

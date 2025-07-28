@@ -77,22 +77,15 @@ for (i in 1:length(layer_names)) {
 
 
 #---- Logic for getting largest subset with non highly correlated variables
-# loop through all subsets{
-  #select first of pair, going through all elements in the subset increment when finished going with all other pairs)
-    #select second of pair, going through all elemetnts in the subset (not the first pair)
-      #get index of row 
-      #get index of col
-      #if pair has high correlation go to next subset
-  #if new subset is larger than previous largest then set this as largest valid subset}
-subset_six <- list()
+
+subset_six <- list() 
 largest_subset <- list()
 largest_subset_list <- list()
+
 for (subset_index in 1:length(all_subsets)){ #going through all the subsets
   current_subset <- all_subsets[[subset_index]]
   valid_subset <- TRUE # flag to know when to break loop
 
-
-  
   for (member_one in 1:length(current_subset)){ # getting first member of the pair
     for (member_two in member_one:length(current_subset)){ #getting second member of the pair
       if(all_subsets[[subset_index]][member_one] != all_subsets[[subset_index]][member_two]){ # making sure the members are not the same eg bio1 and boi1 are the pairs
@@ -108,7 +101,7 @@ for (subset_index in 1:length(all_subsets)){ #going through all the subsets
       break
     }
   }
-  if(valid_subset){ #if a vlid subset
+  if(valid_subset){ #if a vlid subset add onto list of largest subset and subset of six
     if(length(current_subset) == 6)
       subset_six <- c(subset_six, list(current_subset)) 
     if(length(current_subset) > length(largest_subset)){ # if the current subset is larger than the largest subset set the largest subset to the current subset
@@ -125,6 +118,26 @@ for (subset_index in 1:length(all_subsets)){ #going through all the subsets
   }
 }
  
+#getting subsets of size 6 that have 3 & 16 & (5|10)
+#from meeting: use variables 3,5,10,16
+
+desired_vars <- list("bio3","bio5","bio10","bio16")
+
+desired_subsets_six <- list()
+
+#bio5 and bio10 are highly correlated
+
+for (subset in subset_six){
+  if (desired_vars[[1]] %in% subset){
+    if((desired_vars[[2]] %in% subset) || (desired_vars[[3]] %in% subset)){
+      if(desired_vars[[4]] %in% subset){
+        desired_subsets_six <- c(desired_subsets_six, list(subset))
+      }
+    }
+  }
+}
+
+
 
 
       
