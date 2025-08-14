@@ -83,7 +83,7 @@ cor_with_presence <- numeric(19)
 
 for (i in 1:19){
   varnames<- paste0("bio",i)
-  cor_with_presence[i] <- cor(combined_frame[[varname]],combined_frame$"presence",use = "complete.obs")
+  cor_with_presence[i] <- cor(combined_frame[[varnames]],combined_frame$"presence",use = "complete.obs")
 }
 
 # Combine results into a data.frame
@@ -91,6 +91,7 @@ cor_results <- data.frame(
   variable = paste0("bio", 1:19),
   correlation_with_presence = cor_with_presence
 )
+
 
 
 

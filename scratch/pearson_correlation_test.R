@@ -65,8 +65,8 @@ cor_pairs$correlation <- as.vector(p_cor_abs)
 cor_pairs_sub <- subset(x = cor_pairs, subset = (cor_pairs$correlation > cor_lvl) & (cor_pairs$var1 != cor_pairs$var2)) #only getting those with correaltion higher thatn 0.75 and those with same pair eg bio1 and bio1 wld have a correlation of 1
 message("Found Correlation!")
 #Getting Largest uncorrelated subset ====
-#goal for this part. I want to create the largest subset where no varaible has a correlation of over 0.75 with each other, this makes everything before kinda useless
-#for all (x,y) in a subset the |cor(x,y)| < 0.75
+#goal for this part. I want to create the largest subset where no varaible has a correlation of over 0.7 with each other, this makes everything before kinda useless
+#for all (x,y) in a subset the |cor(x,y)| < 0.7
 
 #creating a combination of a certain size from all the bioclim variables
 all_subsets <- list()
