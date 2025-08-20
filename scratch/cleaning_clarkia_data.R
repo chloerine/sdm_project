@@ -25,7 +25,12 @@ clarkia_data <- read.csv(file = "data/ClarkiaUnguiculata/calflora-Clarkia.csv")
 
 data <- subset(clarkia_data, select = c(ID, Latitude, Longitude, Location.Description)) #creating a clakria data frame with onlu ID, Latitude, Longitude, Location.Descriptio
 
-data_filtered <- data[(!is.na(data$Latitude))|(!is.na(data$Longitude)),] #removing from data only if the Latitude OR Longitude is NA
+data_na <- data[(!is.na(data$Latitude))|(!is.na(data$Longitude)),] #removing from data only if the Latitude OR Longitude is NA
+data_filtered <- data_na[!duplicated(data_na[,c("Latitude","Longitude")]),] #removing duplicates, after removing dupluicates the rows arent numbered coorectly so the distance matrix looks like nonsense
+rownames(data_filtered) <- 1:nrow(data_filtered)
+#checking which rows were duplicated, compare them with data_na, from just sampling a few of them it seems that this is right
+duplicated_rows <- duplicated(data_na[,c("Latitude","Longitude")]) # gets after first occurence
+removed_rows <- data_na[duplicated_rows,]
 
 #Checking the X and Y coordinates visually also makeing sure all points are within the study area ----
 
@@ -85,13 +90,130 @@ points(x = data_filtered$Longitude,
        pch = 20,
        cex = 0.75)
 
-# eliminating points that are "too close" withing 0.1 degrees (i think that eli meant meters) of each other. 
+# eliminating points that are "too close" withing 0.1 degrees (i think that eli meant meters) of each other. ----
 # when talking about the distane i'm talking about the geodisic distance (shortest arc on the surface of an ellipsoid)
 #using the distance function
 
+distance_threshold <- 0.1
+
 # x in distance() needs to be a matrix
 temp_data <- data_filtered[,c("Longitude","Latitude")] # just selecting which columns to use
-matrix_filtered <- data.matrix(temp_data) # converting into a matrix
+matrix_filtered <- as.matrix(temp_data) # converting into a matrix
 
-point_distance <- distance(x = matrix_filtered, unit = "m", lonlat = TRUE) # computing the distance between every pair of points
+point_distance <- distance(x = matrix_filtered, unit = "m", lonlat = TRUE) # computing the distance between every pair of points. on the ones ive checked this has give the exact same results as eli's code so im gonna take this as right
+dist_matrix <- as.matrix(point_distance) 
+remove_points <- which((dist_matrix < distance_threshold)&(row(dist_matrix)!=col(dist_matrix)), arr.ind = TRUE) #finding which points to remove while excluding the diagonal (all zeroes)
+
+for (x in nrow(remove_points)){ # removes one of the to close points
+  delete_rows <- remove_points[x,1]
+  data_filtered_fin <- data_filtered[-delete_rows,]
+}
+rownames(data_filtered_fin) <- 1:nrow(data_filtered_fin) 
+
+# getting nearest neighbor index as close to one as possible ----
+#Get initial nearest neighbor index.
+  #Eliminate 1 point. 
+  #Check NNI
+  #If nearest neighbor index is closer to 1 than previous NNI
+    #Set to new NNI
+    #Create new set of neighbors
+  #If not closer to 1 than previous NNI 
+    #Reinstate eliminated point
+    #Go to next point
+  #If at end of points
+    #Return list of kept points
+
+
+library("spatialEco")
+library("spatstat.geom")
+nni_goal <- 1
+df_temp <- st_as_sf(data_filtered_fin, coords = c("Longitude","Latitude"), crs = 4326) #converting to a sf object
+nni_temp <- nni(x = df_temp) #getting initial nni
+df_main <- df_temp #setting inital main df
+nni_main <- nni_temp  #setting inital main nni
+
+
+id_main <- df_main$ID
+x <- 0
+num_removed <- 0
+
+for(i in id_main){
+  #print(df_temp$ID[x])
+  #message(x)
+  df_temp <- df_main[!(df_main$ID %in% i),]
+  nni_temp <- nni(df_temp)
+  if (abs(nni_goal - nni_temp$NNI) < abs(nni_goal - nni_main$NNI)){
+    df_main <- df_temp
+    nni_main <-nni_temp
+    message(nni_main$NNI)
+    message(num_removed)
+    num_removed <- num_removed + 1
+  }else{
+    df_temp <- df_main
+    nni_temp <- nni_main
+  }
+  #x<-x+1
+  if (abs(nni_goal-nni_main$NNI) < 0.25){
+    break
+  }
+}
+
+message(nni_main$NNI)
+
+# great_circle <- function(long1, long2, lat1, lat2){----
+#   #converting into radians 
+#   long1 <- long1 * pi / 180
+#   long2 <- long2 * pi / 1806
+#   lat1 <- lat1 * pi / 180
+#   lat2 <- lat2 * pi / 180
+#   radius <- 6378137  # in meters
+#   delta_long <- long2-long1
+#   #delta_lat <- lat1-lat2
+#   atan_y <- sqrt(((cos(lat2)*sin(delta_long))^2)+((cos(lat1)*sin(lat2))-(sin(lat1)*cos(lat2)*cos(delta_long)))^2)
+#   atan_x <-(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos(delta_long))
+#   central_angle <- atan2(atan_y,atan_x)
+#   
+#   distance <- radius * central_angle
+#   return(distance)
+# }
+# 
+# rows_list <- list()
+# k <- 1
+# 
+# for (x in 1:length(data_filtered$ID) ){
+#   if(x %% 100 == 0){
+#     message(x)
+#   }
+#   for (y in (x+1):length(data_filtered$ID)){
+#     rows_list[[k]]<-list(point1 = data_filtered$ID[x],
+#               point2 = data_filtered$ID[y],
+#               index1 = x,
+#               index2 = y,
+#               distance = great_circle(long1 = data_filtered$Longitude[x], long2 = data_filtered$Longitude[y], 
+#                                       lat1 = data_filtered$Latitude[x], lat2 = data_filtered$Latitude[y]
+#                                       )
+#               )
+#     k <- k + 1
+#   }
+# }
+# dist_df <- do.call(rbind, lapply(rows_list, as.data.frame))
+
+### Randomly remove points within 0.1 latitude or longitude of each other ###
+#library(sp)
+#library(raster)
+
+# Create a spatial points object
+#points <- SpatialPoints(coords = data_filtered[,c("Longitude","Latitude")])
+
+# Create a distance matrix
+#dist_matrix_e <- pointDistance(points, lonlat = TRUE)
+
+# Threshold distance (in degrees) within which points will be considered "too close"
+#threshold_distance <- 0.1
+
+# Get indices of points to remove
+#remove_indices <- which(dist_matrix_e < threshold_distance, arr.ind = TRUE)
+
+
+
 
