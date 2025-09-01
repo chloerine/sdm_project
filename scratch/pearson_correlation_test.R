@@ -76,7 +76,7 @@ for (i in 1:length(layer_names)) {
 }
 
 
-#---- Logic for getting largest subset with non highly correlated variables
+#---- Logic for getting largest subset with non highly correlated variables, also gets valid subsets of length 6
 
 subset_six <- list() 
 largest_subset <- list()
