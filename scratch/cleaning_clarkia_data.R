@@ -91,11 +91,10 @@ points(x = data_filtered$Longitude,
        pch = 20,
        cex = 0.75)
 
-# eliminating points that are "too close" withing 0.1 degrees (i think that eli meant meters) of each other. ----
-# when talking about the distane i'm talking about the geodisic distance (shortest arc on the surface of an ellipsoid)
-#using the distance function
+# eliminating points that are "too close" within 1000 meters of each other ----
+# when talking about the distane i'm talking about the geodisic distance (shortest arc on the surface of an ellipsoid) using the distance function
 
-distance_threshold <- 0.1
+distance_threshold <- 1000 #in meters
 
 # x in distance() needs to be a matrix
 temp_data <- data_filtered[,c("Longitude","Latitude")] # just selecting which columns to use
@@ -105,11 +104,37 @@ point_distance <- distance(x = matrix_filtered, unit = "m", lonlat = TRUE) # com
 dist_matrix <- as.matrix(point_distance) 
 remove_points <- which((dist_matrix < distance_threshold)&(row(dist_matrix)!=col(dist_matrix)), arr.ind = TRUE) #finding which points to remove while excluding the diagonal (all zeroes)
 
-for (x in 1:nrow(remove_points)){ # removes one of the to close points\
-  delete_rows <- remove_points[x,1]
-  data_filtered_fin <- data_filtered[-delete_rows,]
+#removing one from each pair of close points
+#plan: create copy of distmatrix, have place for logging pt to remove, have an updatable place for which point to remove
+# while points are still inside threshold
+  # check which pairs of points are still to close
+  # from the col pick which point to be deleted
+  # replace the rows and columns in the distnace matrix associated with that point with Inf
+#update data_filtered so that it doesnt have "too close" points
+
+set.seed(123) # for reproducability
+dist_temp <- dist_matrix # makes copy of distance matrix
+removed_point <- c() # for storing which pts to remove
+rm_pt_temp <- remove_points # for storing which points are "too close" 
+
+while(nrow(rm_pt_temp) > 0){
+  rm_pt_temp <- which((dist_temp < distance_threshold)&(row(dist_temp)!=col(dist_temp)), arr.ind = TRUE) #checking again which points are to close
+  
+  if(nrow(rm_pt_temp)==0){ # stop if there are no more points to remove
+    break
+  }
+  
+  pair_pick <- sample(1:nrow(rm_pt_temp),1) #randomly selecting a pair to filter
+  pt_pick <- sample(rm_pt_temp[pair_pick,],1) #randomly selecting a point from the pair to delete
+  
+  removed_point <- c(removed_point, pt_pick) # list of all the points to delete
+  
+  dist_temp[pt_pick,] <- Inf # setting the deleted points in the dist matrix to Infinite so they dont get caught in the rm_pt_temp
+  dist_temp[,pt_pick] <- Inf
 }
-rownames(data_filtered_fin) <- 1:nrow(data_filtered_fin) 
+
+data_filtered_fin <- data_filtered[-removed_point,]
+
 
 # getting nearest neighbor index as close to one as possible ----
 #Get initial nearest neighbor index.
@@ -126,15 +151,22 @@ rownames(data_filtered_fin) <- 1:nrow(data_filtered_fin)
 
 library("spatialEco")
 library("spatstat.geom")
+
+message("Starting NNI calculations")
+
+
 nni_goal <- 1
 df_temp <- st_as_sf(data_filtered_fin, coords = c("Longitude","Latitude"), crs = 4326) #converting to a sf object
 nni_temp <- nni(x = df_temp) #getting initial nni
+
+message(sprintf("Initial NNI %f",nni_temp$NNI))
+
 df_main <- df_temp #setting inital main df
 nni_main <- nni_temp  #setting inital main nni
 
 
 id_main <- df_main$ID
-x <- 0
+
 num_removed <- 0
 
 for(i in id_main){
@@ -153,9 +185,14 @@ for(i in id_main){
     nni_temp <- nni_main
   }
   #x<-x+1
-  if (abs(nni_goal-nni_main$NNI) < 0.25){
+  #if (abs(nni_goal-nni_main$NNI) < 0.1){ # so it gets to 0.9
+  #  break
+  #}
+  
+  if (abs(nni_goal-nni_main$NNI) < abs(nni_goal - nni_temp$NNI)){ # so it can get as close to 1 as possible
     break
   }
+  
 }
 
 message(nni_main$NNI)
