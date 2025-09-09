@@ -64,18 +64,20 @@ my_map <- crop(x = world_map, y = 1.25*geographic_extent)
 #plotting occurrence4 points on world map
 plot(world_vect, axes = TRUE, col = "grey95")
 plot(california_vect, add = TRUE, border = "red", lwd = 1.5) #adding CA outline
+title("Occurence Points on world")
 points(x = data_filtered$Longitude,
        y = data_filtered$Latitude,
        col = "olivedrab",
        pch = 20,
        cex = 0.75)
 
-# Plot occurence points on map in with areas surrounding CA 
+# Plot occurence points on map in with areas surrounding CA, looks wierd but just zoom in and it will look fine
 plot(my_map,
      axes = TRUE, 
      col = "grey95")
 # Add California outline
 plot(california_vect, add = TRUE, border = "black", lwd = 1.5)
+title("Occurence Points on CA * 1.25")
 # Add the points for individual observations
 points(x = data_filtered$Longitude, 
        y = data_filtered$Latitude, 
@@ -83,8 +85,9 @@ points(x = data_filtered$Longitude,
        pch = 20, 
        cex = 0.75)
 
-#plotting the data points on only onto CA map, seems that everything is in order!
+#plotting the data points on only onto CA map, seems that everything is in order!,  looks wierd but just zoom in and it will look fine
 plot(california_vect, axes = TRUE, col = "grey95")
+title("Occurence Points on CA")
 points(x = data_filtered$Longitude,
        y = data_filtered$Latitude,
        col = "olivedrab",
@@ -184,12 +187,11 @@ for(i in id_main){
     df_temp <- df_main
     nni_temp <- nni_main
   }
-  #x<-x+1
-  #if (abs(nni_goal-nni_main$NNI) < 0.1){ # so it gets to 0.9
+  #if (abs(nni_goal-nni_main$NNI) < 0.1){ # so it gets to 0.9, gives about 400 occurences
   #  break
   #}
   
-  if (abs(nni_goal-nni_main$NNI) < abs(nni_goal - nni_temp$NNI)){ # so it can get as close to 1 as possible
+  if (abs(nni_goal-nni_main$NNI) < abs(nni_goal - nni_temp$NNI)){ # so it can get as close to 1 as possible, gives about 300 occurences (308)
     break
   }
   
@@ -197,6 +199,19 @@ for(i in id_main){
 
 message(nni_main$NNI)
 
+# cleaning up the df
+df_main_coords <- cbind(df_main,st_coordinates(df_main))# getting longitude and latitude
+colnames(df_main_coords)[colnames(df_main_coords) %in% c("X","Y")]<- c("longitude","latitude") #renaming the long and lat columns gotten from previos line
+df_main_coords <- df_main_coords[,!names(df_main_coords) %in% c("Location.Description")] # getting rid of Location.Description col
+df_main_coords <- sf::st_drop_geometry(df_main_coords) # needs to use this function to remove geometry col from df, Location.description col
 
+#plotting the data points on only onto CA map, seems that everything is in order!,  looks wierd but just zoom in and it will look fine
+plot(california_vect, axes = TRUE, col = "grey95")
+title("Occurence Points on CA using final data")
+points(x = df_main_coords$longitude,
+       y = df_main_coords$latitude,
+       col = "olivedrab",
+       pch = 20,
+       cex = 0.75)
 
-
+write.csv(df_main_coords,file = "C:/Users/joazr/School/RESEARCH/sdm_project/output/clarkia_occurence_fin.csv",row.names = FALSE) # only contains longitude and latitude
