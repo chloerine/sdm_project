@@ -102,7 +102,7 @@ pc_sorted_nice$presence <- NULL
 write.csv(pc_sorted,file = "C:/Users/joazr/School/RESEARCH/sdm_project/output/ecospat_ungu_fin.csv",row.names = FALSE)
 write.csv(pc_sorted_nice,file = "C:/Users/joazr/School/RESEARCH/sdm_project/output/niceOver_ungu_fin.csv",row.names = FALSE)
 
-
+#data for ecospat and niceOverPlot Should be ready
 
 
 
